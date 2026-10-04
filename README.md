@@ -40,7 +40,7 @@ User Query (Streamlit UI: app.py)
 
 ## 📋 Prerequisites
 
-- **Python 3.10 to 3.13** installed on your system.
+- **Python 3.11** (Recommended: `3.11.11` as defined in `.python-version`).
 - Free API keys from:
   - [Groq Cloud](https://console.groq.com/keys) (Ultra-fast LLM inference)
   - [Tavily Search](https://app.tavily.com) (Agentic web search)
@@ -48,12 +48,12 @@ User Query (Streamlit UI: app.py)
 
 ---
 
-## 🚀 Quickstart Guide
+## 🚀 Quickstart Guide (Local Execution)
 
 ### 1. Clone or Open the Repository
 ```bash
-git clone <your-repo-url>
-cd langchain_react_agent
+git clone https://github.com/Talha2555/Search-and-Weather-AI-agent.git
+cd Search-and-Weather-AI-agent
 ```
 
 ### 2. Set Up a Virtual Environment
@@ -94,8 +94,8 @@ cp .env.example .env
 
 Open `.env` and fill in your actual credentials:
 ```ini
-GROQ_API_KEY=gsk_your_groq_api_key_here
-TAVILY_API_KEY=tvly-your_tavily_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
+TAVILY_API_KEY=your_tavily_api_key_here
 WEATHERSTACK_API_KEY=your_weatherstack_api_key_here
 ```
 
@@ -103,7 +103,7 @@ WEATHERSTACK_API_KEY=your_weatherstack_api_key_here
 
 ---
 
-## 🖥️ Running the Application
+## 🖥️ Running Locally
 
 ### Launch Streamlit Web UI:
 ```bash
@@ -119,16 +119,52 @@ python agent.py "Find the capital of Pakistan and its current weather"
 
 ---
 
+## ☁️ Deployment on Render (Web Service)
+
+Follow these steps to deploy this application on [Render](https://render.com) as a **Web Service**:
+
+### 1. Service Configuration
+- **Repository:** Connect your GitHub repository (`Talha2555/Search-and-Weather-AI-agent`).
+- **Environment / Runtime:** `Python 3`
+- **Region:** Any preferred region (e.g., Oregon, Frankfurt).
+- **Branch:** `main`
+- **Build Command:**
+  ```bash
+  pip install -r requirements.txt
+  ```
+- **Start Command:**
+  ```bash
+  streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+  ```
+
+### 2. Python Version Pinning on Render
+The project includes a root-level `.python-version` file specifying `3.11.11`. Render automatically detects this file to provision Python 3.11 with pre-built binary wheels (preventing compilation errors with NumPy and Pydantic).
+
+*(Optional)* You can also explicitly set the environment variable in Render:
+- `PYTHON_VERSION`: `3.11.11`
+
+### 3. Required Environment Variables on Render
+Add the following secret keys under your Render service **Environment** tab:
+
+| Variable Name | Description | Source |
+| :--- | :--- | :--- |
+| `GROQ_API_KEY` | Fast LLM inference with Qwen 27B | [Groq Console](https://console.groq.com) |
+| `TAVILY_API_KEY` | Real-time web search API | [Tavily Search](https://app.tavily.com) |
+| `WEATHERSTACK_API_KEY` | Meteorological & weather API | [Weatherstack](https://weatherstack.com) |
+
+---
+
 ## 📁 Project Structure
 
 ```
 langchain_react_agent/
 ├── agent.py            # LangChain ReAct agent core, tools, & execution logic
 ├── app.py              # Streamlit web application & modern SaaS UI
-├── requirements.txt    # Project dependencies
+├── requirements.txt    # Compatible dependency specifications
+├── .python-version     # Pinned Python version (3.11.11) for Render
 ├── .env.example        # Safe template for required environment variables
 ├── .env                # Local secrets (never committed)
-├── .gitignore          # Git exclusion rules for secrets and caches
+├── .gitignore          # Git exclusion rules for secrets, caches & environments
 └── README.md           # Documentation and setup instructions
 ```
 
@@ -148,22 +184,19 @@ langchain_react_agent/
 
 ## 🔍 Troubleshooting
 
-### 1. Windows SSL Certificate Error
-If you encounter `SSLCertVerificationError` on Windows, `agent.py` automatically binds `certifi` via:
+### 1. Render `ResolutionImpossible` or NumPy Build Failures
+- **Cause:** Using Python 3.14 or conflicting `langchain-core` pins.
+- **Resolution:** Render automatically uses Python 3.11 via `.python-version`, and `requirements.txt` specifies `langchain-core>=0.1.45,<0.2.0`, resolving the conflict with `langchain-groq==0.1.3`.
+
+### 2. Windows SSL Certificate Error
+If you encounter `SSLCertVerificationError` locally on Windows, `agent.py` automatically binds `certifi` via:
 ```python
 os.environ["SSL_CERT_FILE"] = certifi.where()
 ```
 Ensure `certifi` is installed via `pip install certifi`.
 
-### 2. Groq Rate Limits (`OTPM` / `TPM`)
+### 3. Groq Rate Limits (`OTPM` / `TPM`)
 If you encounter Groq token rate limits, lower the **Max Response Tokens** slider in the sidebar (e.g. to 400 or 500) and ensure `temperature` is set to 0.
 
-### 3. Weatherstack Free Tier (HTTPS Restriction)
+### 4. Weatherstack Free Tier (HTTPS Restriction)
 Weatherstack's free plan uses HTTP (`http://api.weatherstack.com/current`). `agent.py` automatically detects free plan limitations (code 105) and falls back from HTTPS to HTTP transparently.
-
-### 4. Streamlit Command Not Found
-If running `streamlit run app.py` says `streamlit: command not found`, run:
-```bash
-python -m streamlit run app.py
-```
-Ensure your virtual environment or conda environment is active.
